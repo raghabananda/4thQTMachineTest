@@ -1,0 +1,101 @@
+﻿
+@{
+    ViewData["Title"] = "DataList";
+}
+
+<h1>DataList</h1>
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <table class="table table-bordered text-center">
+                <thead>
+                    <tr>
+                       <th>Action</th>
+                        <th style="display:none">ID</th>
+                        <th>Farther's Name</th>
+                        <th>Email</th>
+                        <th>Contact No</th>
+                        <th>Child/Children</th>
+
+                    </tr>
+                </thead>
+                <tbody>                    
+                </tbody>              
+            </table>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+      
+        $.ajax({
+            type: 'get',
+            url: '/Home/GetChildren',
+            contenttype: 'application/json',
+            success: function (res) {
+                console.log(res);
+                GetChildren(res.data);
+            }
+        })
+
+    })
+
+    $(document).on("click",".Edit", function (e) {
+      
+        var ID = $(this).parent().siblings()[0].innerText;
+        window.location.href = `/Home/EditView/?ID=${ID}`;
+    })
+
+    function GetChildren(res) {
+        var htmlDom = res.map( x => {
+
+            let childrenHeading = x.children.map(  y => {
+                return `                   
+                        <td>Name</td>
+                        <td>Dob</td>                       
+                   `;
+            }).reduce( (total, item) => total + item, '');
+
+            let childrenHeadingrow = `                
+                   <tr>
+                    ${childrenHeading}
+                   </tr>
+                
+              `;
+
+            let ChildrenData = x.children.map( z => {
+                 return `
+                     
+                        <td>${z.childName}</td>
+                        <td>${z.dob}</td>                      
+                     
+                   `;
+            }).reduce( (total, item) => total + item, '');
+             let ChildrenDatarow = `                
+                   <tr>
+                    ${ChildrenData}
+                   </tr>
+                
+              `;
+            return `
+              <tr class="ParentRow"> 
+                <td><button type="button" class="btn btn-primary Edit">Edit</button></td>
+                <td style="display:none">${x.parentID}</td>
+                <td>${x.fatherName}</td> 
+                 <td>${x.emailID}</td>
+                <td>${x.contactNo}</td>              
+                <td colspan="${2*x.children.length}">
+                  <table>
+                  ${childrenHeadingrow}
+                  ${ChildrenDatarow}
+                  </table
+                </td>
+               
+              </tr>
+           `; 
+        }).reduce((total,item)=>total+item,'');
+        console.log(htmlDom);
+       $('tbody').append(htmlDom);
+       
+    }
+</script>

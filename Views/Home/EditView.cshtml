@@ -1,0 +1,148 @@
+﻿
+@{
+    ViewData["Title"] = "EditView";
+}
+
+<h1>EditView</h1>
+<div class="row justify-content-center">
+    <div class="col-8">
+        <div class="card">
+            <div class="card-header">
+                <div class="row">
+                    <div class="col text-left">
+                        <h1><a asp-action="DataList">Back</a></h1>
+                    </div>
+                    <div class="col text-right">
+                       <a href="#" class="btn btn-primary"><h3>+</h3></a>
+                    </div>
+                </div>
+               
+            </div>
+            <form>
+                <div class="card-body">
+                    <div class="form-group">
+                        <input type="hidden" name="ParentID" />
+                        <label>Father's Name:</label>
+                        <input type="text" name="FirstName" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Email:</label>
+                        <input type="email" name="Email" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Contact No:</label>
+                        <input type="tel" name="ContactNo" class="form-control">
+                    </div>                   
+                    <div class="form-group DynamicForm">
+                        
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <input type="submit" value="Update" class="btn btn-primary">
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        var ParentID = location.href.split('?')[1].split('=')[1];
+        $.ajax({
+            type: 'get',
+            url: `/Home/parentwithChildDetail?ParentID=${ParentID}`,
+            contenttype: 'application/json',
+            success: function (res) {
+                console.log(res.data);
+                BindData(res.data[0],ParentID);
+            },
+            error: function (err) {
+                console.log(err);
+            }
+        })
+    })
+
+    function BindData(res,ParentID) {
+        //console.log(res);
+        $('input[name="ParentID"]').val(ParentID);
+        $('input[name="FirstName"]').val(res.fatherName);
+        $('input[name="Email"]').val(res.emailID);
+        $('input[name="ContactNo"]').val(res.contactNo);
+        ChildTemplateBind(res.children);
+    }
+
+    function ChildTemplateBind(children) {
+        var i = 0;
+        var htmlDom=children.map(x => {            
+            return `
+                <div class="row justify-content-center">
+                  <br>
+                  <div class="col">
+                     <div class="card">
+                       <div class="card-header">
+                           <h1>Child-${++i}</h1>
+                       </div>
+                     <div class="card-body">
+                        <div class="form-group">
+                          <input type="hidden" name="childID-${i}" value="${x.childID}" class="ChildID">
+                          <label>Name:</label>
+                          <input type="text" name="Child${i}-Name" class="form-control ChildName" value="${x.childName}">
+                       </div>
+                       <div class="form-group">
+                         <label>Dob:</label>
+                         <input type="date" name="Child${i}-Dob" class="form-control ChildDob" value="${x.dob.split('T')[0]}">               
+                      </div>
+                    </div>
+                  </div>
+               </div>
+             </div>
+              `;
+        }).reduce((total, item) => total + item, '');
+
+        $('.DynamicForm').append(htmlDom);
+    }
+
+    $('form').on('submit', function (e) {
+        e.preventDefault();
+        var model = {};
+        $(this).serializeArray().map(x => model[x.name] = x.value);
+        console.log(model);
+        let childName=[];
+        let childDob = [];
+        let ChildID = [];
+                  $('.ChildName').each(function(index,item){
+                    childName=[...childName,$(item).val()];
+                  })
+                  $('.ChildDob').each(function(index,item){
+                    childDob=[...childDob,$(item).val()];
+                  })                 
+                  $('.ChildID').each(function(index,item){
+                    ChildID=[...ChildID,$(item).val()];
+                  }) 
+        var formDattoSubmit = {
+                      ParentID:model.ParentID,
+                      FirstName: model.FirstName,
+                      Email: model.Email,
+                      ContactNo: model.ContactNo,
+                      childNames: childName,
+                      childDobs: childDob,
+                      childIDs:ChildID
+        };
+        //console.log(formDattoSubmit);
+                  $.ajax({
+                      type: 'post',
+                      url: '/Home/UpdateData',
+                      data:formDattoSubmit,
+                      contenttype: 'application/json',
+                      success: function (res) {
+                          //console.log(res);
+                          location.href='/Home/Datalist';
+                      },
+                      error: function (err) {
+                          console.log(err);
+                      }
+                  });
+    })
+</script>
+
